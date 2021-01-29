@@ -5,7 +5,7 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Alphabet import SingleLetterAlphabet
 import numpy as np
 import pandas as pd
-
+import os
 
 DATA_FOLDER = "data/"
 ALIGNMENT_FOLDER = DATA_FOLDER + "alignments/"
@@ -23,12 +23,20 @@ def sub_sample_raw_data():
     SeqIO.write(sub_sampled, DATA_FOLDER + "raw/pol_subsampled.fasta", "fasta")
 
 
+def align_subsampled_data():
+    """
+    Uses mafft to align the sequences in the subsampled data.
+    """
+    sub_sampled_fasta = DATA_FOLDER + "raw/pol_subsampled.fasta"
+    output = ALIGNMENT_FOLDER + "raw/pol.fasta"
+    os.system(f"mafft {sub_sampled_fasta} > {output}")
+
 def MSA_pol_HXB2():
     """
     Uses the raw subsampled sequences, align them to HXB2 and remove regions that correspond to gap is HXB2.
     Saves the newly obtained MultiSequenceAlignement in fasta.
     """
-    alignment = AlignIO.read(ALIGNMENT_FOLDER + "raw/mafft_alignment.fasta", 'fasta')
+    alignment = AlignIO.read(ALIGNMENT_FOLDER + "raw/pol.fasta", 'fasta')
     alignment = remove_gaps(alignment, ref_row=0)
     alignment = get_pol_region(alignment)
     AlignIO.write([alignment], ALIGNMENT_FOLDER + "to_HXB2/pol.fasta", "fasta")
@@ -87,4 +95,6 @@ def metadata_from_names(alignment):
 
 
 if __name__ == '__main__':
-    sub_sample_raw_data()
+    # sub_sample_raw_data()
+    # align_subsampled_data()
+    MSA_pol_HXB2()
