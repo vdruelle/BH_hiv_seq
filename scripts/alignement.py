@@ -16,8 +16,12 @@ RAW_SUB_SAMPLED = DATA_FOLDER + "raw/pol_subsampled.fasta"
 REFERENCE_HXB2 = DATA_FOLDER + "reference/HXB2.fasta"
 RAW_ALIGNMENT = ALIGNMENT_FOLDER + "raw/pol.fasta"
 HXB2_ALIGNMENT = ALIGNMENT_FOLDER + "to_HXB2/pol.fasta"
+HXB2_ALIGNMENT_META = ALIGNMENT_FOLDER + "to_HXB2/pol_metadata.csv"
+HXB2_ALIGNMENT_TREE = ALIGNMENT_FOLDER + "to_HXB2/pol_tree.nwk"
 
 ########## What I used to create / filter the data ##########
+
+
 def sub_sample_raw_data():
     """
     Subsample the raw fasta file for easier analysis. Saves the sub_sampled file in the same directory.
@@ -60,15 +64,14 @@ def make_metadata():
     """
     alignment = AlignIO.read(HXB2_ALIGNMENT, "fasta")
     df = metadata_from_names(alignment)
-    tmp = HXB2_ALIGNMENT.split(".")[0] + "_metadata.csv"
-    df.to_csv(tmp)
+    df.to_csv(HXB2_ALIGNMENT_META, index=False)
 
 
-def make_tree():
+def make_FastTree():
     """
     Uses Treetime on created the alignment.
     """
-    dates = parse_dates()
+    os.system(f"fasttree -nt {HXB2_ALIGNMENT} > {HXB2_ALIGNMENT_TREE}")
 
 
 ########## Helper functions #########
@@ -110,14 +113,13 @@ def metadata_from_names(alignment):
     """
     Creates a metadata tsv file from the MSA using the names of the sequences.
     """
-    columns = ["subtype", "country", "date", "name", "accession"]
+    columns = ["subtype", "country", "date", "name"]
     raw_names = [seq.name for seq in alignment]
     df = pd.DataFrame(data=None, index=None, columns=columns)
     for raw_name in raw_names:
         tmp_col = raw_name.split(".")
-        if len(tmp_col) > 5:
-            tmp_col[4] = "".join(tmp_col[4:])
-            tmp_col = tmp_col[:5]
+        tmp_col = tmp_col[:3]
+        tmp_col.append(raw_name)
         tmp = pd.DataFrame(data=[tmp_col], columns=columns)
         df = df.append(tmp)
     return df
@@ -128,4 +130,7 @@ if __name__ == '__main__':
     # align_subsampled_data()
     # MSA_pol_HXB2()
     # make_metadata()
-    make_tree()
+    # make_FastTree()
+    dates = parse_dates(HXB2_ALIGNMENT_META)
+    tree = TreeTime(gtr="Jukes-Cantor", tree=HXB2_ALIGNMENT_TREE,
+                    precision=1, aln=HXB2_ALIGNMENT, verbose=2, dates=dates)
