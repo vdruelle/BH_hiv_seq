@@ -7,11 +7,17 @@ import numpy as np
 import pandas as pd
 import os
 from treetime import TreeTime
+from treetime.utils import parse_dates
 
 DATA_FOLDER = "data/"
 ALIGNMENT_FOLDER = DATA_FOLDER + "alignments/"
+RAW_DATA = DATA_FOLDER + "raw/pol.fasta"
+RAW_SUB_SAMPLED = DATA_FOLDER + "raw/pol_subsampled.fasta"
+REFERENCE_HXB2 = DATA_FOLDER + "reference/HXB2.fasta"
+RAW_ALIGNMENT = ALIGNMENT_FOLDER + "raw/pol.fasta"
+HXB2_ALIGNMENT = ALIGNMENT_FOLDER + "to_HXB2/pol.fasta"
 
-# What I used to create / filter the data
+########## What I used to create / filter the data ##########
 def sub_sample_raw_data():
     """
     Subsample the raw fasta file for easier analysis. Saves the sub_sampled file in the same directory.
@@ -24,46 +30,48 @@ def sub_sample_raw_data():
     # sub_sampled = record[:nb_sample]
 
     # This is random
-    os.system(f"seqtk sample -s100 {DATA_FOLDER}raw/pol.fasta {nb_sample} > {DATA_FOLDER}raw/pol_subsampled.fasta")
-    sub_sampled =  list(SeqIO.parse(DATA_FOLDER + "raw/pol_subsampled.fasta", "fasta"))
-    sub_sampled = insert_sequence(sub_sampled, DATA_FOLDER + "reference/HXB2.fasta")
-    SeqIO.write(sub_sampled, DATA_FOLDER + "raw/pol_subsampled.fasta", "fasta")
+    os.system(f"seqtk sample -s100 {RAW_DATA} {nb_sample} > {RAW_SUB_SAMPLED}")
+    sub_sampled = list(SeqIO.parse(RAW_SUB_SAMPLED, "fasta"))
+    sub_sampled = insert_sequence(sub_sampled, REFERENCE_HXB2)
+    SeqIO.write(sub_sampled, RAW_SUB_SAMPLED, "fasta")
 
 
 def align_subsampled_data():
     """
     Uses mafft to align the sequences in the subsampled data.
     """
-    sub_sampled_fasta = DATA_FOLDER + "raw/pol_subsampled.fasta"
-    output = ALIGNMENT_FOLDER + "raw/pol.fasta"
-    os.system(f"mafft {sub_sampled_fasta} > {output}")
+    os.system(f"mafft {RAW_SUB_SAMPLED} > {RAW_ALIGNMENT}")
+
 
 def MSA_pol_HXB2():
     """
     Uses the raw subsampled sequences, align them to HXB2 and remove regions that correspond to gap in HXB2.
     Saves the newly obtained MultiSequenceAlignement in fasta.
     """
-    alignment = AlignIO.read(ALIGNMENT_FOLDER + "raw/pol.fasta", 'fasta')
+    alignment = AlignIO.read(RAW_ALIGNMENT, 'fasta')
     alignment = remove_gaps(alignment, ref_row=0)
     alignment = get_pol_region(alignment)
-    AlignIO.write([alignment], ALIGNMENT_FOLDER + "to_HXB2/pol.fasta", "fasta")
+    AlignIO.write([alignment], HXB2_ALIGNMENT, "fasta")
+
 
 def make_metadata():
     """
     Creates the metadata file from the names in the alignment. Saves it to the same folder as alignment.
     """
-    alignment = AlignIO.read(ALIGNMENT_FOLDER + "to_HXB2/pol.fasta", "fasta")
+    alignment = AlignIO.read(HXB2_ALIGNMENT, "fasta")
     df = metadata_from_names(alignment)
-    df.to_csv(ALIGNMENT_FOLDER + "to_HXB2/pol_metadata.csv")
+    tmp = HXB2_ALIGNMENT.split(".")[0] + "_metadata.csv"
+    df.to_csv(tmp)
+
 
 def make_tree():
     """
     Uses Treetime on created the alignment.
     """
+    dates = parse_dates()
 
 
-
-# Helper functions
+########## Helper functions #########
 def insert_sequence(record, sequence_file):
     "Insert the sequence sequence at the beginning of the file."
     record.insert(0, SeqIO.read(sequence_file, "fasta"))
@@ -119,4 +127,5 @@ if __name__ == '__main__':
     # sub_sample_raw_data()
     # align_subsampled_data()
     # MSA_pol_HXB2()
-    make_metadata()
+    # make_metadata()
+    make_tree()
