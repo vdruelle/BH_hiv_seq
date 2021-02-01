@@ -6,10 +6,14 @@ from Bio.Alphabet import SingleLetterAlphabet
 import numpy as np
 import pandas as pd
 import os
+import pickle
 from treetime import TreeTime
 from treetime.utils import parse_dates
 
+########## File and directory location ##########
+
 DATA_FOLDER = "data/"
+INTERMEDIATE_FOLDER = "intermediate_files/"
 ALIGNMENT_FOLDER = DATA_FOLDER + "alignments/"
 RAW_DATA = DATA_FOLDER + "raw/pol.fasta"
 RAW_SUB_SAMPLED = DATA_FOLDER + "raw/pol_subsampled.fasta"
@@ -74,6 +78,22 @@ def make_FastTree():
     os.system(f"fasttree -nt {HXB2_ALIGNMENT} > {HXB2_ALIGNMENT_TREE}")
 
 
+def make_TreeTime():
+    """
+    Runs treetime and saves the results.
+    """
+    dates = parse_dates(HXB2_ALIGNMENT_META)
+    tree = TreeTime(gtr="Jukes-Cantor", tree=HXB2_ALIGNMENT_TREE,
+                    precision=1, aln=HXB2_ALIGNMENT, verbose=2, dates=dates)
+    result = tree.run(root='best', infer_gtr=True, relaxed_clock=False, max_iter=2,
+                      branch_length_mode='input', n_iqd=3, resolve_polytomies=True,
+                      Tc='skyline', time_marginal="assign", vary_rate=True)
+
+    assert result, "Error while running the tree."
+
+    return tree
+
+
 ########## Helper functions #########
 def insert_sequence(record, sequence_file):
     "Insert the sequence sequence at the beginning of the file."
@@ -125,12 +145,19 @@ def metadata_from_names(alignment):
     return df
 
 
+def runTree():
+    """
+    Run analysis from console.
+    """
+    os.system(f"treetime --aln {HXB2_ALIGNMENT} --tree {HXB2_ALIGNMENT_TREE} --dates {HXB2_ALIGNMENT_META} --outdir {INTERMEDIATE_FOLDER}treetime")
+    os.system(f"treetime clock --aln {HXB2_ALIGNMENT} --tree {HXB2_ALIGNMENT_TREE} --dates {HXB2_ALIGNMENT_META} --reroot least-squares --outdir {INTERMEDIATE_FOLDER}treetime_clock")
+    os.system(f"treetime ancestral --aln {HXB2_ALIGNMENT} --tree {HXB2_ALIGNMENT_TREE} --outdir {INTERMEDIATE_FOLDER}treetime_ancestral")
+
 if __name__ == '__main__':
     # sub_sample_raw_data()
     # align_subsampled_data()
     # MSA_pol_HXB2()
     # make_metadata()
     # make_FastTree()
-    dates = parse_dates(HXB2_ALIGNMENT_META)
-    tree = TreeTime(gtr="Jukes-Cantor", tree=HXB2_ALIGNMENT_TREE,
-                    precision=1, aln=HXB2_ALIGNMENT, verbose=2, dates=dates)
+    # tree = make_TreeTime()
+    runTree()
