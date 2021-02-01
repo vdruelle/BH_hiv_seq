@@ -6,6 +6,7 @@ from Bio.Alphabet import SingleLetterAlphabet
 import numpy as np
 import pandas as pd
 import os
+from treetime import TreeTime
 
 DATA_FOLDER = "data/"
 ALIGNMENT_FOLDER = DATA_FOLDER + "alignments/"
@@ -17,9 +18,15 @@ def sub_sample_raw_data():
     Adds HXB2 sequence as the first sequence.
     """
     nb_sample = 1000
-    record =  list(SeqIO.parse(DATA_FOLDER + "raw/pol.fasta", "fasta"))
-    sub_sampled = record[:nb_sample]
-    sumb_sampled = insert_sequence(sub_sampled, DATA_FOLDER + "reference/HXB2.fasta")
+
+    # This is not random so it contains mainly sequences from the same time
+    # record =  list(SeqIO.parse(DATA_FOLDER + "raw/pol.fasta", "fasta"))
+    # sub_sampled = record[:nb_sample]
+
+    # This is random
+    os.system(f"seqtk sample -s100 {DATA_FOLDER}raw/pol.fasta {nb_sample} > {DATA_FOLDER}raw/pol_subsampled.fasta")
+    sub_sampled =  list(SeqIO.parse(DATA_FOLDER + "raw/pol_subsampled.fasta", "fasta"))
+    sub_sampled = insert_sequence(sub_sampled, DATA_FOLDER + "reference/HXB2.fasta")
     SeqIO.write(sub_sampled, DATA_FOLDER + "raw/pol_subsampled.fasta", "fasta")
 
 
@@ -33,13 +40,27 @@ def align_subsampled_data():
 
 def MSA_pol_HXB2():
     """
-    Uses the raw subsampled sequences, align them to HXB2 and remove regions that correspond to gap is HXB2.
+    Uses the raw subsampled sequences, align them to HXB2 and remove regions that correspond to gap in HXB2.
     Saves the newly obtained MultiSequenceAlignement in fasta.
     """
     alignment = AlignIO.read(ALIGNMENT_FOLDER + "raw/pol.fasta", 'fasta')
     alignment = remove_gaps(alignment, ref_row=0)
     alignment = get_pol_region(alignment)
     AlignIO.write([alignment], ALIGNMENT_FOLDER + "to_HXB2/pol.fasta", "fasta")
+
+def make_metadata():
+    """
+    Creates the metadata file from the names in the alignment. Saves it to the same folder as alignment.
+    """
+    alignment = AlignIO.read(ALIGNMENT_FOLDER + "to_HXB2/pol.fasta", "fasta")
+    df = metadata_from_names(alignment)
+    df.to_csv(ALIGNMENT_FOLDER + "to_HXB2/pol_metadata.csv")
+
+def make_tree():
+    """
+    Uses Treetime on created the alignment.
+    """
+
 
 
 # Helper functions
@@ -97,4 +118,5 @@ def metadata_from_names(alignment):
 if __name__ == '__main__':
     # sub_sample_raw_data()
     # align_subsampled_data()
-    MSA_pol_HXB2()
+    # MSA_pol_HXB2()
+    make_metadata()
