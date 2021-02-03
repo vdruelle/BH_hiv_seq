@@ -159,5 +159,5 @@ if __name__ == '__main__':
     # MSA_pol_HXB2()
     # make_metadata()
     # make_FastTree()
-    # tree = make_TreeTime()
-    runTree()
+    tree = make_TreeTime()
+    # runTree()
