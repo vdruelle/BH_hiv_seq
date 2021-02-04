@@ -8,13 +8,16 @@ def metadata_from_names(sequences):
     """
     Creates a metadata tsv file from the sequences names.
     """
-    columns = ["subtype", "country", "date", "name"]
+    columns = ["strain", "virus", "date"]
     raw_names = [seq.name for seq in sequences]
     df = pd.DataFrame(data=None, index=None, columns=columns)
     for raw_name in raw_names:
-        tmp_col = raw_name.split(".")
-        tmp_col = tmp_col[:3]
-        tmp_col.append(raw_name)
+        raw_name_split = raw_name.split(".")
+        date = raw_name_split[2] + "-XX-XX"
+
+        tmp_col = [raw_name]
+        tmp_col.append("HIV")
+        tmp_col.append(date)
         tmp = pd.DataFrame(data=[tmp_col], columns=columns)
         df = df.append(tmp)
     return df
