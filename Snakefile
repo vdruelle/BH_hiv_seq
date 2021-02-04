@@ -93,9 +93,9 @@ rule ancestral:
     message: "Reconstructing ancestral sequences and mutations"
     input:
         tree = rules.refine.output.tree,
-        alignment = rules.align.output
+        alignment = rules.align.output.alignment
     output:
-        node_data = "results/nt_muts.json"
+        node_data = "intermediate_files/{region}_nt_muts.json"
     params:
         inference = "joint"
     shell:
@@ -105,6 +105,24 @@ rule ancestral:
             --alignment {input.alignment} \
             --output-node-data {output.node_data} \
             --inference {params.inference}
+        """
+
+rule export:
+    message: "Exporting data files for visualisation in auspice"
+    input:
+        tree = rules.refine.output.tree,
+        metadata = rules.metadata.output.metadata,
+        branch_lengths = rules.refine.output.node_data,
+        nt_muts = rules.ancestral.output.node_data,
+    output:
+        auspice_json = "visualisation/{region}.json",
+    shell:
+        """
+        augur export v2 \
+            --tree {input.tree} \
+            --metadata {input.metadata} \
+            --node-data {input.branch_lengths} {input.nt_muts} \
+            --output {output.auspice_json}
         """
 
 
