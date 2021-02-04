@@ -1,11 +1,3 @@
-def lanl_to_augur_metadata(lanl_file):
-    "Transform the lanl metadata to augur format"
-
-    import pandas as pd
-    df = pd.read_csv(lanl_file, sep="\t", skiprows=2)
-    df.head()
-
-
 rule lanl_to_augur:
     message:
         "Generating augur format metadata from lanl metadata"
@@ -20,23 +12,21 @@ rule lanl_to_augur:
 rule sub_sample:
     message:
         """
-        Sub sampling the raw data using augur filter.
+        Sub sampling the raw data using seqtk. Adding HXB2 sequence.
         """
     input:
         sequences = "data/raw/{region}.fasta",
-        metadata = "data/raw/{region}_metadata_augur.tsv"
+        HXB2 = "data/reference/HXB2.fasta"
     output:
         sequences = "data/raw/{region}_subsampled.fasta"
     params:
         nb_sequences = 1000
     shell:
         """
-        augur filter \
-            --sequences {input.sequences} \
-            --metadata {input.metadata} \
-            --sequences-per-group {params.nb_sequences} \
-            --output {output.sequences}
+        seqtk sample -s100 {input.sequences} {params.nb_sequences} > {output.sequences}
+        python scripts/add_HXB2.py {output.sequences} {input.HXB2}
         """
+
 
 
 rule clean:
