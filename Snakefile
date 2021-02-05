@@ -1,3 +1,7 @@
+rule all:
+    input:
+        auspice_json = "visualisation/pol.json"
+
 rule sub_sample:
     message:
         """
@@ -42,6 +46,20 @@ rule align:
             --reference-sequence {input.reference} \
             --output {output.alignment} \
             --fill-gaps \
+        """
+
+rule split_positions:
+    message:
+        "Splitting {input.alignment} into 1st, 2nd and 3rd position alignments."
+    input:
+        alignment = rules.align.output.alignment
+    output:
+        alignment_first = "data/alignments/to_HXB2/{region}_1st.fasta"
+        alignment_second = "data/alignments/to_HXB2/{region}_2nd.fasta"
+        alignment_third = "data/alignments/to_HXB2/{region}_3rd.fasta"
+    shell:
+        """
+        python scripts/split_positions.py {input.alignment}
         """
 
 rule tree:
@@ -122,7 +140,8 @@ rule export:
             --tree {input.tree} \
             --metadata {input.metadata} \
             --node-data {input.branch_lengths} {input.nt_muts} \
-            --output {output.auspice_json}
+            --output {output.auspice_json} \
+            --title HIV-1_{wildcards.region}
         """
 
 
@@ -133,4 +152,5 @@ rule clean:
         rm data/raw/*subsampled.fasta
         rm data/alignments/to_HXB2/*
         rm intermediate_files/*
+        rm visualisation/*
         """
