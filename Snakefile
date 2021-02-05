@@ -1,6 +1,9 @@
 rule all:
     input:
-        auspice_json = "visualisation/pol.json"
+        auspice_json = "visualisation/pol.json",
+        gtr_1 = "intermediate_files/pol_1st_gtr.json",
+        gtr_2 = "intermediate_files/pol_2nd_gtr.json",
+        gtr_3 = "intermediate_files/pol_3rd_gtr.json"
 
 rule sub_sample:
     message:
@@ -54,8 +57,8 @@ rule split_positions:
     input:
         alignment = rules.align.output.alignment
     output:
-        alignment_first = "data/alignments/to_HXB2/{region}_1st.fasta"
-        alignment_second = "data/alignments/to_HXB2/{region}_2nd.fasta"
+        alignment_first = "data/alignments/to_HXB2/{region}_1st.fasta",
+        alignment_second = "data/alignments/to_HXB2/{region}_2nd.fasta",
         alignment_third = "data/alignments/to_HXB2/{region}_3rd.fasta"
     shell:
         """
@@ -131,9 +134,9 @@ rule export:
         tree = rules.refine.output.tree,
         metadata = rules.metadata.output.metadata,
         branch_lengths = rules.refine.output.node_data,
-        nt_muts = rules.ancestral.output.node_data,
+        nt_muts = rules.ancestral.output.node_data
     output:
-        auspice_json = "visualisation/{region}.json",
+        auspice_json = "visualisation/{region}.json"
     shell:
         """
         augur export v2 \
@@ -142,6 +145,19 @@ rule export:
             --node-data {input.branch_lengths} {input.nt_muts} \
             --output {output.auspice_json} \
             --title HIV-1_{wildcards.region}
+        """
+
+
+rule subalign_gtr:
+    message: "Inferring gtr model for subalignment {wildcards.region}_{wildcards.position} using TreeTime."
+    input:
+        tree = rules.refine.output.tree,
+        align = "data/alignments/to_HXB2/{region}_{position}.fasta",
+    output:
+        gtr_json = "intermediate_files/{region}_{position}_gtr.json"
+    shell:
+        """
+        python scripts/infer_gtr.py {input.align} {input.tree} {output.gtr_json}
         """
 
 
