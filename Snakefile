@@ -1,9 +1,9 @@
 rule all:
     input:
         auspice_json = "visualisation/pol.json",
-        gtr_1 = "intermediate_files/pol_1st_gtr.json",
-        gtr_2 = "intermediate_files/pol_2nd_gtr.json",
-        gtr_3 = "intermediate_files/pol_3rd_gtr.json"
+        gtr_1 = "gtr/pol_1st_gtr.json",
+        gtr_2 = "gtr/pol_2nd_gtr.json",
+        gtr_3 = "gtr/pol_3rd_gtr.json"
 
 rule sub_sample:
     message:
@@ -154,7 +154,7 @@ rule subalign_gtr:
         tree = rules.refine.output.tree,
         align = "data/alignments/to_HXB2/{region}_{position}.fasta",
     output:
-        gtr_json = "intermediate_files/{region}_{position}_gtr.json"
+        gtr_json = "gtr/{region}_{position}_gtr.json"
     shell:
         """
         python scripts/infer_gtr.py {input.align} {input.tree} {output.gtr_json}
