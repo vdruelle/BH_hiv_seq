@@ -1,9 +1,10 @@
 rule all:
     input:
         auspice_json = "visualisation/pol.json",
-        gtr_1 = "gtr/pol_1st_gtr.json",
-        gtr_2 = "gtr/pol_2nd_gtr.json",
-        gtr_3 = "gtr/pol_3rd_gtr.json"
+        gtr = "gtr/pol.json",
+        gtr_1 = "gtr/pol_1st.json",
+        gtr_2 = "gtr/pol_2nd.json",
+        gtr_3 = "gtr/pol_3rd.json"
 
 rule sub_sample:
     message:
@@ -148,13 +149,25 @@ rule export:
         """
 
 
+rule gtr:
+    message: "Inferring GTR model for alignment {wildcards.region} using TreeTime."
+    input:
+        tree = rules.refine.output.tree,
+        align = "data/alignments/to_HXB2/{region}.fasta"
+    output:
+        gtr_json = "gtr/{region}.json"
+    shell:
+        """
+        python scripts/infer_gtr.py {input.align} {input.tree} {output.gtr_json}
+        """
+
 rule subalign_gtr:
     message: "Inferring gtr model for subalignment {wildcards.region}_{wildcards.position} using TreeTime."
     input:
         tree = rules.refine.output.tree,
-        align = "data/alignments/to_HXB2/{region}_{position}.fasta",
+        align = "data/alignments/to_HXB2/{region}_{position}.fasta"
     output:
-        gtr_json = "gtr/{region}_{position}_gtr.json"
+        gtr_json = "gtr/{region}_{position}.json"
     shell:
         """
         python scripts/infer_gtr.py {input.align} {input.tree} {output.gtr_json}
@@ -169,4 +182,5 @@ rule clean:
         rm data/alignments/to_HXB2/*
         rm intermediate_files/*
         rm visualisation/*
+        rm gtr/*
         """
