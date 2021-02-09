@@ -1,10 +1,7 @@
 rule all:
     input:
         auspice_json = "visualisation/pol.json",
-        gtr = "gtr/pol.json",
-        gtr_1 = "gtr/pol_1st.json",
-        gtr_2 = "gtr/pol_2nd.json",
-        gtr_3 = "gtr/pol_3rd.json"
+        rates = "mutation_rates/pol.json"
 
 rule sub_sample:
     message:
@@ -173,6 +170,22 @@ rule subalign_gtr:
         python scripts/infer_gtr.py {input.align} {input.tree} {output.gtr_json}
         """
 
+rule mutation_rates:
+    message: "Computing the mutation_rates for region {wildcards.region}."
+    input:
+        refine_file = rules.refine.output.node_data,
+        gtr_all = rules.gtr.output.gtr_json,
+        gtr_first = "gtr/{region}_1st.json",
+        gtr_second = "gtr/{region}_2nd.json",
+        gtr_third = "gtr/{region}_3rd.json"
+    output:
+        mutation_rates = "mutation_rates/{region}.json"
+    shell:
+        """
+        python scripts/extract_mut_rate.py {input.refine_file} {input.gtr_all} {input.gtr_first} \
+            {input.gtr_second} {input.gtr_third} {output.mutation_rates}
+        """
+
 
 rule clean:
     message: "Removing generated files."
@@ -183,4 +196,5 @@ rule clean:
         rm intermediate_files/*
         rm visualisation/*
         rm gtr/*
+        rm mutation_rates/*
         """
