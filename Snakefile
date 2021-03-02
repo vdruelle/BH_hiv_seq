@@ -1,7 +1,13 @@
 rule all:
     input:
-        auspice_json = "visualisation/pol.json",
-        rates = "mutation_rates/pol.json"
+        # auspice_json = "visualisation/pol.json",
+        # rates = "mutation_rates/pol.json",
+        tree = "intermediate_files/timetree_pol_400.nwk",
+        tree2 = "intermediate_files/timetree_pol_200.nwk",
+        tree3 = "intermediate_files/timetree_pol_100.nwk",
+        tree4 = "intermediate_files/timetree_pol_50.nwk",
+        tree5 = "intermediate_files/timetree_pol_25.nwk",
+        tree6 = "intermediate_files/timetree_pol_600.nwk"
 
 rule sub_sample:
     message:
@@ -11,12 +17,10 @@ rule sub_sample:
     input:
         sequences = "data/raw/{region}.fasta"
     output:
-        sequences = "data/raw/{region}_subsampled.fasta"
-    params:
-        nb_sequences = 1000
+        sequences = "data/raw/{region}_{nb_sequences}_subsampled.fasta"
     shell:
         """
-        seqtk sample -s100 {input.sequences} {params.nb_sequences} > {output.sequences}
+        seqtk sample -s100 {input.sequences} {wildcards.nb_sequences} > {output.sequences}
         """
 
 rule metadata:
@@ -25,7 +29,7 @@ rule metadata:
     input:
         sequences = rules.sub_sample.output.sequences
     output:
-        metadata = "data/raw/{region}_subsampled_metadata.tsv"
+        metadata = "data/raw/{region}_{nb_sequences}_subsampled_metadata.tsv"
     shell:
         """
         python scripts/metadata_from_names.py {input.sequences} {output.metadata}
@@ -39,7 +43,7 @@ rule align:
         sequences = rules.sub_sample.output.sequences,
         reference = "data/reference/HXB2_{region}.fasta"
     output:
-        alignment = "data/alignments/to_HXB2/{region}.fasta"
+        alignment = "data/alignments/to_HXB2/{region}_{nb_sequences}.fasta"
     shell:
         """
         augur align \
@@ -69,7 +73,7 @@ rule tree:
     input:
         alignment = rules.align.output.alignment
     output:
-        tree = "intermediate_files/tree_{region}.nwk"
+        tree = "intermediate_files/tree_{region}_{nb_sequences}.nwk"
     shell:
         """
         augur tree \
@@ -87,8 +91,8 @@ rule refine:
         alignment = rules.align.output.alignment,
         metadata = rules.metadata.output.metadata
     output:
-        tree = "intermediate_files/timetree_{region}.nwk",
-        node_data = "intermediate_files/branch_lengths_{region}.json"
+        tree = "intermediate_files/timetree_{region}_{nb_sequences}.nwk",
+        node_data = "intermediate_files/branch_lengths_{region}_{nb_sequences}.json"
     params:
         coalescent = "opt",
         date_inference = "marginal",
@@ -186,6 +190,16 @@ rule mutation_rates:
             {input.gtr_second} {input.gtr_third} {output.mutation_rates}
         """
 
+rule mean_branch_length:
+    message: "Computing mean branch length for {wildcards.region}"
+    input:
+        refine_file = rules.refine.output.node_data
+    output:
+        mean_branch_length = "branch_lengths/{region}.json""
+    shell:
+        """
+        python scripts/extract_mean_branch_length.py {input.refine_file} {output.mean_branch_length}
+        """
 
 rule clean:
     message: "Removing generated files."
