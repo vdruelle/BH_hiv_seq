@@ -16,7 +16,7 @@ def mean_branch_length(refine_file):
         total_length += refine["nodes"][key]["branch_length"]
     mean_length = total_length/len(refine["nodes"])
 
-    return mean_length
+    return mean_length / refine["clock"]["rate"]
 
 
 refine_file = sys.argv[1]

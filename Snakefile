@@ -2,12 +2,20 @@ rule all:
     input:
         # auspice_json = "visualisation/pol.json",
         # rates = "mutation_rates/pol.json",
-        tree = "intermediate_files/timetree_pol_400.nwk",
+        tree = "intermediate_files/timetree_pol_1000.nwk",
+        tree0 = "intermediate_files/timetree_pol_600.nwk",
+        tree1 = "intermediate_files/timetree_pol_400.nwk",
         tree2 = "intermediate_files/timetree_pol_200.nwk",
         tree3 = "intermediate_files/timetree_pol_100.nwk",
         tree4 = "intermediate_files/timetree_pol_50.nwk",
         tree5 = "intermediate_files/timetree_pol_25.nwk",
-        tree6 = "intermediate_files/timetree_pol_600.nwk"
+        branch = "branch_lengths/pol_1000.json",
+        branch0 = "branch_lengths/pol_600.json",
+        branch1 = "branch_lengths/pol_400.json",
+        branch2 = "branch_lengths/pol_200.json",
+        branch3 = "branch_lengths/pol_100.json",
+        branch4 = "branch_lengths/pol_50.json",é
+        branch5 = "branch_lengths/pol_25.json",
 
 rule sub_sample:
     message:
@@ -191,11 +199,11 @@ rule mutation_rates:
         """
 
 rule mean_branch_length:
-    message: "Computing mean branch length for {wildcards.region}"
+    message: "Computing mean branch length for {wildcards.region}."
     input:
-        refine_file = rules.refine.output.node_data
+        refine_file = rules.refine.output.node_data,
     output:
-        mean_branch_length = "branch_lengths/{region}.json""
+        mean_branch_length = "branch_lengths/{region}_{nb_sequences}.json"
     shell:
         """
         python scripts/extract_mean_branch_length.py {input.refine_file} {output.mean_branch_length}
