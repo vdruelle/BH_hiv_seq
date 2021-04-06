@@ -14,7 +14,7 @@ rule all:
         branch1 = "branch_lengths/pol_400.json",
         branch2 = "branch_lengths/pol_200.json",
         branch3 = "branch_lengths/pol_100.json",
-        branch4 = "branch_lengths/pol_50.json",é
+        branch4 = "branch_lengths/pol_50.json",
         branch5 = "branch_lengths/pol_25.json",
 
 rule sub_sample:
@@ -31,6 +31,7 @@ rule sub_sample:
         seqtk sample -s100 {input.sequences} {wildcards.nb_sequences} > {output.sequences}
         """
 
+
 rule metadata:
     message:
         "Creating metadata file from sequences names."
@@ -38,6 +39,40 @@ rule metadata:
         sequences = rules.sub_sample.output.sequences
     output:
         metadata = "data/raw/{region}_{nb_sequences}_subsampled_metadata.tsv"
+    shell:
+        """
+        python scripts/metadata_from_names.py {input.sequences} {output.metadata}
+        """
+
+
+rule filter:
+    message:
+        """
+        Subsampling the original lanl data homogeneously in time.
+        """
+    input:
+        lanl_data = "data/raw/{region}.fasta",
+        lanl_metadata = "data/raw/{region}_metadata.tsv"
+    output:
+        sequences = "data/raw/{region}_{nb_sequences}_subsampled2.fasta"
+    shell:
+        """
+        augur filter \
+        --sequences {input.lanl_data} \
+        --metadata {input.lanl_metadata} \
+        --group-by year \
+        --sequences-per-group 29 \
+        --output {output.sequences}
+        """
+
+
+rule metadata2:
+    message:
+        "Creating metadata file from sequences names."
+    input:
+        sequences = rules.filter.output.sequences
+    output:
+        metadata = "data/raw/{region}_{nb_sequences}_subsampled2_metadata.tsv"
     shell:
         """
         python scripts/metadata_from_names.py {input.sequences} {output.metadata}

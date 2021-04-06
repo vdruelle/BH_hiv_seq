@@ -3,13 +3,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-sequences = sys.argv[1]
-metadata = sys.argv[2]
-output = sys.argv[3]
+filename = sys.argv[1]
 
-df = pd.read_csv(metadata, sep='\t')
-tmp = df["date"]
-tmp = []
+df = pd.read_csv(filename, sep='\t')
+dates = list(df["date"])
+dates = [float(date[:4]) for date in dates]
 
-df.sort_values(by=["date"])
-print(df["date"])
+
+plt.figure()
+plt.hist(dates, bins=np.arange(1970, 2020))
+# plt.yscale("log")
+plt.xlabel("Year")
+plt.ylabel("# sequences")
+plt.show()
