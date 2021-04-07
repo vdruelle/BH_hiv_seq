@@ -17,33 +17,6 @@ rule all:
         # branch4 = "branch_lengths/pol_50.json",
         # branch5 = "branch_lengths/pol_25.json",
 
-# rule sub_sample:
-#     message:
-#         """
-#         Sub sampling the raw data using seqtk.
-#         """
-#     input:
-#         sequences = "data/raw/{region}.fasta"
-#     output:
-#         sequences = "data/raw/{region}_{nb_sequences}_subsampled.fasta"
-#     shell:
-#         """
-#         seqtk sample -s100 {input.sequences} {wildcards.nb_sequences} > {output.sequences}
-#         """
-#
-#
-# rule metadata:
-#     message:
-#         "Creating metadata file from sequences names."
-#     input:
-#         sequences = rules.sub_sample.output.sequences
-#     output:
-#         metadata = "data/raw/{region}_{nb_sequences}_subsampled_metadata.tsv"
-#     shell:
-#         """
-#         python scripts/metadata_from_names.py {input.sequences} {output.metadata}
-#         """
-
 
 rule sub_sample:
     message:
