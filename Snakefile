@@ -1,7 +1,14 @@
 rule all:
     input:
-        auspice_json = "visualisation/pol_1000.json",
-        rates = "mutation_rates/pol_1000.json",
+        # auspice_json = "visualisation/pol_1000.json",
+        # auspice_json = "visualisation/pol_200.json",
+        # rates0 = "mutation_rates/pol_1000.json",
+        # rates1 = "mutation_rates/pol_600.json",
+        # rates2 = "mutation_rates/pol_400.json",
+        # rates3 = "mutation_rates/pol_200.json",
+        # rates4 = "mutation_rates/pol_100.json",
+        # rates5 = "mutation_rates/pol_50.json",
+        # rates6 = "mutation_rates/pol_25.json",
         # tree = "intermediate_files/timetree_pol_1000.nwk",
         # tree0 = "intermediate_files/timetree_pol_600.nwk",
         # tree1 = "intermediate_files/timetree_pol_400.nwk",
@@ -16,6 +23,11 @@ rule all:
         # branch3 = "branch_lengths/pol_100.json",
         # branch4 = "branch_lengths/pol_50.json",
         # branch5 = "branch_lengths/pol_25.json",
+        # branch6 = "branch_lengths/pol_1500.json",
+        # branch7 = "branch_lengths/pol_2000.json",
+        rates6 = "mutation_rates/pol_1500.json",
+        rates7 = "mutation_rates/pol_2000.json",
+
 
 
 rule sub_sample:
@@ -37,7 +49,10 @@ rule sub_sample:
 
 rule align:
     message:
-        "Aligning sequences to {input.reference} using Augur. Strip gaps relative to reference."
+        """
+        Aligning sequences to {input.reference} using Augur. Add reference to alignment and strips gaps
+        relative to reference.
+        """
     input:
         sequences = rules.sub_sample.output.sequences,
         reference = "data/reference/HXB2_{region}.fasta"
@@ -129,7 +144,6 @@ rule ancestral:
             --inference {params.inference}
         """
 
-# Need to update that one for different number of sequences
 rule export:
     message: "Exporting data files for visualisation in auspice"
     input:
