@@ -23,8 +23,6 @@ alignment_file = sys.argv[1]
 tree_file = sys.argv[2]
 output_file = sys.argv[3]
 
-print("hi")
-
 alignment = AlignIO.read(alignment_file, "fasta")
 tt = TreeAnc(tree=tree_file, aln=alignment_file)
 gtr = tt.infer_gtr(marginal=True, normalized_rate=False)
