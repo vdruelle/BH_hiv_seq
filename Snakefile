@@ -1,39 +1,49 @@
 rule all:
     input:
-        # auspice_json = "visualisation/pol_1000.json",
-        # auspice_json = "visualisation/pol_200.json",
-        # rates0 = "mutation_rates/pol_1000.json",
-        # rates1 = "mutation_rates/pol_600.json",
-        # rates2 = "mutation_rates/pol_400.json",
-        # rates3 = "mutation_rates/pol_200.json",
-        # rates4 = "mutation_rates/pol_100.json",
-        # rates5 = "mutation_rates/pol_50.json",
-        # rates6 = "mutation_rates/pol_25.json",
-        # tree = "intermediate_files/timetree_pol_1000.nwk",
-        # tree0 = "intermediate_files/timetree_pol_600.nwk",
-        # tree1 = "intermediate_files/timetree_pol_400.nwk",
-        # tree2 = "intermediate_files/timetree_pol_200.nwk",
-        # tree3 = "intermediate_files/timetree_pol_100.nwk",
-        # tree4 = "intermediate_files/timetree_pol_50.nwk",
-        # tree5 = "intermediate_files/timetree_pol_25.nwk",
-        # branch = "branch_lengths/pol_1000.json",
-        # branch0 = "branch_lengths/pol_600.json",
-        # branch1 = "branch_lengths/pol_400.json",
-        # branch2 = "branch_lengths/pol_200.json",
-        # branch3 = "branch_lengths/pol_100.json",
-        # branch4 = "branch_lengths/pol_50.json",
-        # branch5 = "branch_lengths/pol_25.json",
-        # branch6 = "branch_lengths/pol_1500.json",
-        # branch7 = "branch_lengths/pol_2000.json",
-        rates6 = "mutation_rates/pol_1500.json",
-        rates7 = "mutation_rates/pol_2000.json",
+        auspice_json = "visualisation/pol_1000.json",
+        auspice_json2 = "visualisation/pol_200.json",
+        rates0 = "mutation_rates/pol_1000.json",
+        rates1 = "mutation_rates/pol_600.json",
+        rates2 = "mutation_rates/pol_400.json",
+        rates3 = "mutation_rates/pol_200.json",
+        rates4 = "mutation_rates/pol_100.json",
+        rates5 = "mutation_rates/pol_50.json",
+        rates6 = "mutation_rates/pol_25.json",
+        tree = "intermediate_files/timetree_pol_1000.nwk",
+        tree0 = "intermediate_files/timetree_pol_600.nwk",
+        tree1 = "intermediate_files/timetree_pol_400.nwk",
+        tree2 = "intermediate_files/timetree_pol_200.nwk",
+        tree3 = "intermediate_files/timetree_pol_100.nwk",
+        tree4 = "intermediate_files/timetree_pol_50.nwk",
+        tree5 = "intermediate_files/timetree_pol_25.nwk",
+        branch = "branch_lengths/pol_1000.json",
+        branch0 = "branch_lengths/pol_600.json",
+        branch1 = "branch_lengths/pol_400.json",
+        branch2 = "branch_lengths/pol_200.json",
+        branch3 = "branch_lengths/pol_100.json",
+        branch4 = "branch_lengths/pol_50.json",
+        branch5 = "branch_lengths/pol_25.json"
 
+
+rule lanl_metadata:
+    message:
+        """
+        Creating metadata for the original LANL data.
+        """
+    input:
+        lanl_data = "data/raw/{region}.fasta"
+    output:
+        lanl_metadata = "data/raw/{region}_metadata.tsv"
+    shell:
+        """
+        python scripts/metadata_from_names.py {input.lanl_data} {output.lanl_metadata}
+        """
 
 
 rule sub_sample:
     message:
         """
-        Subsampling the original lanl data homogeneously in time and creating metadata.
+        Subsampling the original lanl data homogeneously in time and creating subsample metadata.
         """
     input:
         lanl_data = "data/raw/{region}.fasta",
@@ -66,6 +76,21 @@ rule align:
             --output {output.alignment} \
             --fill-gaps \
         """
+
+rule consensus:
+    message:
+        """
+        Computes the consensus sequence of the alignment.
+        """
+    input:
+        alignment = rules.align.output.alignment
+    output:
+        consensus_sequence = "data/alignments/to_HXB2/{region}_{nb_sequences}_consensus.fasta"
+    shell:
+        """
+        python scritps/consensus_sequence.py {input.alignment}
+        """
+
 
 rule split_positions:
     message:
@@ -219,7 +244,7 @@ rule clean:
     message: "Removing generated files."
     shell:
         """
-        rm data/raw/*subsampled.fasta -f
+        rm data/raw/*subsampled* -f
         rm data/alignments/to_HXB2/* -f
         rm intermediate_files/* -f
         rm visualisation/* -f

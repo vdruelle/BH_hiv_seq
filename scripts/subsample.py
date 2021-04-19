@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
+from Bio.Seq import Seq
 
 sequences = sys.argv[1]
 metadata = sys.argv[2]
@@ -57,6 +58,17 @@ output_df["date"] = [str(date)+"-XX-XX" for date in output_df["date"]]
 # Creating the output sequences
 sequences = list(SeqIO.parse(sequences, "fasta"))
 sequences = [seq for seq in sequences if seq.name in seq_names]
+
+# Cleaning the sequences (some characters are non ATGC-N sometimes)
+for ii in range(len(sequences)):
+    seq = np.array(sequences[ii])
+    tmp1 = np.logical_and(seq!="a", seq!="t")
+    tmp2= np.logical_and(seq!="g", seq!="c")
+    tmp3= np.logical_and(seq!="-", seq!="n")
+    tmp4 = np.logical_and(tmp1, tmp2)
+    tmp5 = np.logical_and(tmp4, tmp3)
+    seq[tmp5] = "n"
+    sequences[ii].seq = Seq("".join(seq))
 
 # Creating the output files
 output_df.to_csv(output_metadata, index=False, sep="\t")
