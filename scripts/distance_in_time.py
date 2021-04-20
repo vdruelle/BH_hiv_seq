@@ -41,7 +41,7 @@ def get_mean_distance_in_time(alignment_file, consensus_sequence, subtype="B"):
     dates = dates[subtypes == subtype]
 
     # Distance to consensus sequence
-    distance_matrix = (alignment_array != consensus_sequence)[gap_mask]
+    distance_matrix = (alignment_array != consensus_sequence)[:, gap_mask]
     distance = np.sum(distance_matrix, axis=1, dtype=int) / distance_matrix.shape[-1]
 
     # Distance average per year
