@@ -20,19 +20,28 @@ def get_consensus_sequence(filename):
         consensus_sequence = np.array(consensus)[0]
     return consensus_sequence
 
+
+def get_gap_mask(alignment_array, threshold=0.1):
+    "Return a vector were true are the sites seen with less than threshold fraction of N."
+    gaps = alignment_array == "N"
+    gap_proportion = np.sum(gaps, axis=0, dtype=int) / gaps.shape[0]
+    return gap_proportion < threshold
+
+
 def get_mean_distance_in_time(alignment_file, consensus_sequence, subtype="B"):
     alignment = AlignIO.read(alignment_file, "fasta")
     names = [seq.id for seq in alignment]
     dates = np.array([int(name.split(".")[2]) for name in names])
     subtypes = np.array([name.split(".")[0] for name in names])
     alignment_array = np.array(alignment)
+    gap_mask = get_gap_mask(alignment_array)
 
     # Selecting subtype
     alignment_array = alignment_array[subtypes == subtype]
     dates = dates[subtypes == subtype]
 
     # Distance to consensus sequence
-    distance_matrix = (alignment_array != consensus_sequence)
+    distance_matrix = (alignment_array != consensus_sequence)[gap_mask]
     distance = np.sum(distance_matrix, axis=1, dtype=int) / distance_matrix.shape[-1]
 
     # Distance average per year
@@ -61,7 +70,8 @@ for subtype in subtypes:
     years, dist, std = get_mean_distance_in_time(alignment_file, consensus_sequence, subtype)
     fit = np.polyfit(years[std != 0], dist[std != 0], deg=1, w=(1 / std[std != 0]))
     plt.errorbar(years, dist, yerr=std, fmt=".", label=subtype, color=colors[c])
-    plt.plot(years, np.polyval(fit, years), "--", color=colors[c], label=f"{round(fit[0],5)}x + {round(fit[1],5)}")
+    plt.plot(years, np.polyval(fit, years), "--",
+             color=colors[c], label=f"{round(fit[0],5)}x + {round(fit[1],5)}")
     c += 1
 
 plt.grid()

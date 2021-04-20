@@ -68,6 +68,7 @@ rule align:
         reference = "data/reference/HXB2_{region}.fasta"
     output:
         alignment = "data/alignments/to_HXB2/{region}_{nb_sequences}.fasta"
+    threads: 4
     shell:
         """
         augur align \
@@ -75,6 +76,7 @@ rule align:
             --reference-sequence {input.reference} \
             --output {output.alignment} \
             --fill-gaps \
+            --nthreads {threads}
         """
 
 rule consensus:
@@ -88,7 +90,7 @@ rule consensus:
         consensus_sequence = "data/alignments/to_HXB2/{region}_{nb_sequences}_consensus.fasta"
     shell:
         """
-        python scritps/consensus_sequence.py {input.alignment}
+        python scripts/consensus_sequences.py {input.alignment} {output.consensus_sequence}
         """
 
 
@@ -113,11 +115,13 @@ rule tree:
         alignment = rules.align.output.alignment
     output:
         tree = "intermediate_files/tree_{region}_{nb_sequences}.nwk"
+    threads: 4
     shell:
         """
         augur tree \
             --alignment {input.alignment} \
-            --output {output.tree}
+            --output {output.tree} \
+            --nthreads {threads}
         """
 
 rule refine:
